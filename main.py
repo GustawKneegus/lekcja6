@@ -1,6 +1,7 @@
+import sys
 from src.manager import Manager
 from src.models import Parameters
-
+ 
 
 def print_section_header(title: str):
     """Print a formatted section header"""
@@ -64,10 +65,49 @@ def display_tenants(manager):
 
 
 if __name__ == '__main__':
+
     parameters = Parameters()
     manager = Manager(parameters)
 
-    display_apartments(manager)
-    display_tenants(manager)
-    
+    if len(sys.argv) == 4:
+
+        apartment_key = sys.argv[1]
+        year = int(sys.argv[2])
+        month = int(sys.argv[3])
+
+        settlement = manager.get_settlement(
+            apartment_key,
+            year,
+            month
+        )
+
+        if settlement is None:
+            print("Settlement not found")
+            sys.exit()
+
+        tenant_settlements = manager.create_tenants_settlements(
+            settlement
+        )
+
+        print_section_header("APARTMENT SETTLEMENT")
+
+        print(f"Apartment: {settlement.apartment}")
+        print(f"Period: {settlement.month}/{settlement.year}")
+        print(
+            f"Total costs: "
+            f"{format_currency(settlement.total_due_pln)}"
+        )
+
+        print_subsection_header("Tenants settlements")
+
+        for tenant in tenant_settlements:
+            print(
+                f"• {tenant.tenant:<20}"
+                f"{format_currency(tenant.total_due_pln)}"
+            )
+
+    else:
+        display_apartments(manager)
+        display_tenants(manager)
+
     print(f"\n{'=' * 70}\n")

@@ -1,3 +1,5 @@
+from calendar import month
+
 from src.models import Apartment, Bill, Parameters, Tenant, TenantSettlement, Transfer, ApartmentSettlement
 from typing import List, Tuple
 
@@ -70,5 +72,70 @@ class Manager:
                 total_due_pln=apartment_settlement.total_due_pln / len(tenants_in_apartment)
             )
         for tenant in tenants_in_apartment ] 
-    
+
+    def get_tax(
+        self,
+        year: int,
+        month: int,
+        tax_rate: float
+    ) -> int:
+
+        if month < 1 or month > 12:
+            raise ValueError("Month must be between 1 and 12")
+
+        revenue = 0.0
+
+        for transfer in self.transfers:
+            if (
+                transfer.settlement_year == year
+                and transfer.settlement_month == month
+            ):
+                revenue += transfer.amount_pln
+
+        return round(revenue * tax_rate)
+
+    def find_apartments_without_bills(
+        self,
+        apartment_key: str = None,
+        year: int = None,
+        month: int = None
+    ):
+
+        if month is not None and (month < 1 or month > 12):
+            raise ValueError("Month must be between 1 and 12")
+
+        apartments_to_check = (
+            [apartment_key]
+            if apartment_key is not None
+            else list(self.apartments.keys())
+        )
+
+        missing_bills = []
+
+        for apartment in apartments_to_check:
+
+            if apartment not in self.apartments:
+                continue
+
+            has_bill = any(
+                bill['apartment'] == apartment
+                and (
+                    year is None
+                    or bill['settlement_year'] == year
+                )
+                and (
+                    month is None
+                    or bill['settlement_month'] == month
+                )
+                for bill in self.bills
+            )
+
+            if not has_bill:
+                missing_bills.append(apartment)
+
+        return missing_bills
+
+
+
+
     
